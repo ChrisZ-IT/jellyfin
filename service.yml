@@ -1,0 +1,40 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: jellyfin-gateway
+  namespace: jellyfin
+spec:
+  selector:
+    istio: ingress
+  servers:
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: jellyfin-cert-request
+    hosts:
+    - jellyfin.${DOMAIN_NAME}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: jellyfin-virtualservice
+  namespace: jellyfin
+spec:
+  hosts:
+  - jellyfin.${DOMAIN_NAME}
+  gateways:
+  - jellyfin-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    # timeout: 0s
+    route:
+    - destination:
+        host: jellyfin.jellyfin.svc.cluster.local
+        port:
+          number: 8096

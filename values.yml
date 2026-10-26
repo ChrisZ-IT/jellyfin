@@ -1,0 +1,67 @@
+image:
+  repository: docker.io/jellyfin/jellyfin
+  pullPolicy: IfNotPresent
+  tag: 12.1
+deploymentStrategy:
+  type: Recreate
+nodeSelector:
+  kubernetes.io/hostname: ${WORKER_NODE}
+persistence:
+  config:
+    enabled: true
+    existingClaim: jellyfin-config-pvc
+  media:
+    enabled: true
+    existingClaim: jellyfin-media-pvc
+    readOnly: true
+  cache:
+    enabled: false
+service:
+  type: ClusterIP
+  port: 8096
+ingress:
+  enabled: false
+networkPolicy:
+  enabled: true
+  ingress:
+    allowExternal: false
+    podSelector:
+      matchLabels:
+        jellyfin-client: "true"
+  egress:
+    allowDNS: true
+    allowAllEgress: false
+    restrictedEgress:
+      allowMetadata: true
+      allowInCluster: false
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+startupProbe:
+  tcpSocket:
+    port: http
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  failureThreshold: 30
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  # successThreshold: 1
+  # failureThreshold: 3
+  # timeoutSeconds: 1
+  periodSeconds: 10
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  # successThreshold: 1
+  # failureThreshold: 3
+  # timeoutSeconds: 1
+  periodSeconds: 10
